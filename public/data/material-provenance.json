@@ -1,0 +1,81 @@
+{
+  "source": "Z-Anatomy Blender material names, authored node socket colours where available, and existing glTF PBR factors",
+  "method": "Existing exported baseColorFactor values are retained. Missing factors receive a portable, non-metallic material-class colour. Named source socket colours are also restored when an earlier conversion recorded the universal default fallback, including Organ and Organ-1 through Organ-8. emissiveFactor is set to [0,0,0]. No geometry, buffers, node transforms, or texture bytes are changed.",
+  "limitations": "The Blender source uses procedural shader graphs that do not export faithfully to glTF. This conversion restores legible material classes; it does not recreate procedural shaders, tissue microstructure, textures, or photorealism.",
+  "written": true,
+  "files": [
+    {
+      "file": "z-anatomy-cardiovascular-01.glb",
+      "materials": 7,
+      "conversion": {
+        "preserved-exported-base-color": 7
+      }
+    },
+    {
+      "file": "z-anatomy-cardiovascular-02.glb",
+      "materials": 7,
+      "conversion": {
+        "preserved-exported-base-color": 7
+      }
+    },
+    {
+      "file": "z-anatomy-joints.glb",
+      "materials": 4,
+      "conversion": {
+        "preserved-exported-base-color": 4
+      }
+    },
+    {
+      "file": "z-anatomy-lymphoid.glb",
+      "materials": 10,
+      "conversion": {
+        "preserved-exported-base-color": 10
+      }
+    },
+    {
+      "file": "z-anatomy-muscular-insertions.glb",
+      "materials": 33,
+      "conversion": {
+        "preserved-exported-base-color": 33
+      }
+    },
+    {
+      "file": "z-anatomy-muscular.glb",
+      "materials": 26,
+      "conversion": {
+        "preserved-exported-base-color": 26
+      }
+    },
+    {
+      "file": "z-anatomy-nervous-sense.glb",
+      "materials": 35,
+      "conversion": {
+        "preserved-exported-base-color": 35
+      }
+    },
+    {
+      "file": "z-anatomy-regions.glb",
+      "materials": 13,
+      "conversion": {
+        "preserved-exported-base-color": 13
+      }
+    },
+    {
+      "file": "z-anatomy-skeletal.glb",
+      "materials": 22,
+      "conversion": {
+        "preserved-exported-base-color": 22
+      }
+    },
+    {
+      "file": "z-anatomy-visceral.glb",
+      "materials": 38,
+      "conversion": {
+        "preserved-exported-base-color": 38
+      }
+    }
+  ],
+  "totals": {
+    "preserved-exported-base-color": 195
+  }
+}

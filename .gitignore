@@ -1,0 +1,18 @@
+node_modules
+dist
+.DS_Store
+playwright-report
+test-results
+
+# Blender source files and recovery/backup data stay local. The deployable
+# runtime assets are exported GLB files in public/models/ and remain tracked.
+*.blend
+*.blend1
+*.blend2
+*.blend@
+
+# Generated export tooling caches
+.source/
+__pycache__/
+*.py[cod]
+.cache/

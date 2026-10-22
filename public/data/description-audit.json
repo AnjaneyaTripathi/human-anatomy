@@ -1,0 +1,11 @@
+{
+  "totalStructures": 3848,
+  "sourceDefinitionsDirect": 2855,
+  "sourceDefinitionsParent": 487,
+  "sourceDefinitionsOther": 0,
+  "specificSupplemented": 61,
+  "classContextAvailable": 337,
+  "missingSpecific": 445,
+  "unmatchedNoContext": 108,
+  "descriptionsPresent": 3403
+}

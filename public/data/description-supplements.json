@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "status": "editorial_unreviewed",
+  "purpose": "Conservative, short editorial descriptions for structures missing an embedded source definition. These supplements are not a Netter review and must remain labelled editorial_unreviewed until anatomical review.",
+  "sources": {
+    "skeletal": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/6-1-the-functions-of-the-skeletal-system",
+      "basis": "OpenStax Anatomy and Physiology: skeletal functions and cartilage."
+    },
+    "costalCartilage": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/9-3-cartilaginous-joints",
+      "basis": "OpenStax Anatomy and Physiology 2e: rib-to-costal-cartilage synchondroses and cartilaginous joints."
+    },
+    "synovial": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/9-4-synovial-joints",
+      "basis": "OpenStax Anatomy and Physiology: articular capsules, bursae, and tendon sheaths."
+    },
+    "muscles": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-3-axial-muscles-of-the-head-neck-and-back",
+      "basis": "OpenStax Anatomy and Physiology 2e: named skeletal muscles and their movements."
+    },
+    "abdominalMuscles": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-4-axial-muscles-of-the-abdominal-wall-and-thorax",
+      "basis": "OpenStax Anatomy and Physiology 2e: abdominal-wall muscles."
+    },
+    "upperLimbMuscles": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/11-5-muscles-of-the-pectoral-girdle-and-upper-limbs",
+      "basis": "OpenStax Anatomy and Physiology 2e: muscles of the upper limb."
+    },
+    "intervertebralDisc": {
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK470583/",
+      "basis": "NCBI Bookshelf, StatPearls: Anatomy, Back, Intervertebral Discs."
+    },
+    "lymphatic": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/21-1-anatomy-of-the-lymphatic-and-immune-systems",
+      "basis": "OpenStax Anatomy and Physiology: regional lymph nodes filter lymph and support immune responses."
+    },
+    "cardiovascular": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/19-1-heart-anatomy",
+      "basis": "OpenStax Anatomy and Physiology: heart valves and pulmonary circulation."
+    },
+    "veins": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/20-5-circulatory-pathways",
+      "basis": "OpenStax Anatomy and Physiology 2e: systemic and pulmonary venous pathways."
+    },
+    "centralNervousSystem": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/13-2-the-central-nervous-system",
+      "basis": "OpenStax Anatomy and Physiology 2e: cerebral cortical landmarks, cerebellum, and spinal cord."
+    },
+    "regions": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/1-6-anatomical-terminology",
+      "basis": "OpenStax Anatomy and Physiology: standard regional anatomical terminology."
+    },
+    "skin": {
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/5-2-accessory-structures-of-the-skin",
+      "basis": "OpenStax Anatomy and Physiology: hair and nail accessory structures."
+    },
+    "respiratory": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/22-2-the-lungs",
+      "basis": "OpenStax Anatomy and Physiology 2e: the conducting airways and bronchial tree."
+    },
+    "eye": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/15-2-vision",
+      "basis": "OpenStax Anatomy and Physiology 2e: accessory structures of the eye and aqueous humor."
+    },
+    "endocrine": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/17-4-the-thyroid-gland",
+      "basis": "OpenStax Anatomy and Physiology 2e: parathyroid glands and parathyroid hormone."
+    },
+    "pituitary": {
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/17-3-the-pituitary-gland-and-hypothalamus",
+      "basis": "OpenStax Anatomy and Physiology 2e: the pituitary gland and endocrine control."
+    },
+    "salivary": {
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK538325/",
+      "basis": "NCBI Bookshelf, StatPearls: Anatomy, Head and Neck, Salivary Glands."
+    }
+  },
+  "exact": {
+    "Skeletal system": { "description": "The body system of bones and cartilage that supports the body, protects organs, facilitates movement, produces blood cells, and stores minerals.", "source": "skeletal" },
+    "Joints": { "description": "The body’s articulations, where bones meet; their structure determines stability and permitted movement.", "source": "synovial" },
+    "Teeth": { "description": "Mineralized oral structures used to cut, tear, and grind food during mastication.", "source": "skeletal" },
+    "Rotator cuff muscles": { "description": "The four shoulder muscles whose tendons blend with the glenohumeral capsule to stabilize the humeral head while it moves.", "source": "synovial" },
+    "Nucleus pulposus": { "description": "The hydrated, gelatinous core of an intervertebral disc; it resists compression and helps distribute spinal loads.", "source": "intervertebralDisc" },
+    "Internal abdominal oblique muscle": { "description": "A lateral abdominal-wall muscle whose fibers help compress abdominal contents and assist trunk movement.", "source": "abdominalMuscles" },
+    "Rectus anterior capitis muscle": { "description": "A small prevertebral neck muscle that flexes the head at the atlanto-occipital joint.", "source": "muscles" },
+    "Rectus lateralis capitis muscle": { "description": "A small lateral atlanto-occipital muscle that assists lateral flexion and stabilizes the head.", "source": "muscles" },
+    "Humeral head of flexor carpi ulnaris": { "description": "The humeral origin of flexor carpi ulnaris, a forearm muscle that flexes and adducts the wrist.", "source": "upperLimbMuscles" },
+    "Humero-ulnar head of flexor digitorum superficialis": { "description": "The humeroulnar origin of flexor digitorum superficialis, which flexes the fingers at the proximal interphalangeal joints.", "source": "upperLimbMuscles" },
+    "Interosseous membrane": { "description": "A fibrous connective-tissue sheet between paired long bones that helps bind them and transmits load.", "source": "synovial" },
+    "Parathyroid gland": { "description": "An endocrine gland that secretes parathyroid hormone, a key regulator of blood calcium concentration.", "source": "endocrine" },
+    "Hypophysis": { "description": "The pituitary gland, an endocrine organ at the brain’s base that releases hormones controlling multiple body functions.", "source": "pituitary" },
+    "Pubic hairs": { "description": "Keratinized hair shafts arising from follicles in the pubic skin.", "source": "skin" },
+    "Hairs of head": { "description": "Keratinized hair shafts arising from follicles of the scalp.", "source": "skin" }
+    ,"Skeleton of upper limbs": { "description": "The bones of the upper limbs, providing the framework for shoulder, arm, forearm, wrist, and hand movement.", "source": "skeletal" }
+    ,"Bones of free part of lower limb": { "description": "The bones distal to the pelvic girdle that form the thigh, leg, ankle, and foot.", "source": "skeletal" }
+    ,"Lymphoid organs": { "description": "The organs and tissues that produce, house, or coordinate immune cells and lymphatic immune responses.", "source": "lymphatic" }
+    ,"Left lobe of thymus": { "description": "One lobe of the thymus, a primary lymphoid organ where T lymphocytes mature.", "source": "lymphatic" }
+    ,"Right lobe of thymus": { "description": "One lobe of the thymus, a primary lymphoid organ where T lymphocytes mature.", "source": "lymphatic" }
+    ,"Tracheobronchial tree": { "description": "The branching conducting airway system from the trachea through the bronchi within the lungs.", "source": "respiratory" }
+    ,"Superior parathyroid gland": { "description": "One of the parathyroid glands, which secretes parathyroid hormone to help regulate blood calcium concentration.", "source": "endocrine" }
+    ,"Accessory parotid gland": { "description": "A variable, separate focus of salivary tissue anterior to the main parotid gland; it may drain through a secondary duct.", "source": "salivary" }
+    ,"Ciliary body-curve": { "description": "The ciliary body is part of the vascular middle layer of the eye; it contributes to aqueous-humor production and contains the ciliary muscle.", "source": "eye" }
+  },
+  "rules": [
+    { "kind": "specific", "pattern": "^Costal cartilage of (?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth) rib$", "description": "The hyaline cartilage at the anterior end of the named rib, providing a flexible connection within the thoracic cage.", "source": "costalCartilage" },
+    { "kind": "specific", "pattern": "^Nucleus pulposus [CTL][0-9]+-[CTSL][0-9]+$", "description": "The hydrated, gelatinous core of the intervertebral disc at this named spinal level; it resists compression and helps distribute load.", "source": "intervertebralDisc" },
+    { "pattern": "\\bligament(s)?$", "description": "A named dense connective-tissue band that links the indicated skeletal structures and contributes to joint stability.", "source": "synovial" },
+    { "pattern": "^Articular capsule", "description": "The fibrous capsule enclosing the named synovial joint; its inner synovial membrane surrounds the fluid-filled joint cavity.", "source": "synovial" },
+    { "pattern": "\\bbursa(e)?\\b", "description": "A synovial fluid-filled sac in the named location that reduces friction between adjacent moving tissues.", "source": "synovial" },
+    { "pattern": "(Tendon sheath|tendon sheaths|Synovial sheaths|fibrous sheath)", "description": "A synovial or fibrous sheath associated with the named tendon, reducing friction as the tendon moves through a confined path.", "source": "synovial" },
+    { "pattern": "^Interosseous ligament$", "description": "A ligament located between adjacent bones that supports their articulation and limits separation.", "source": "synovial" },
+    { "pattern": "(meniscotibial|tibiotalar|talocalcaneal|cuneocuboid|intercuneiform|cuneometatarsal|radiocapitate|iliofemoral|scapholunate|trapeziotrapezoidal|capitohamate|trapezoideocapitate|lunotriquetral|scaphotrapeziotrapezoidal|scaphocapitate|scaphotriquetral|triquetrocapitate|triquetrohamate|pisotriquetral|capitohamate)", "description": "A named ligament of the indicated joint complex that reinforces the articulation and guides or limits movement.", "source": "synovial" },
+    { "pattern": "^(Superior|Inferior|Medial|Lateral|Anterior|Posterior|Deep|Superficial|Parietal|Pulmonary|Thoracic|Cranial|Brachial|Pre-auricular|Intraglandular|Infra-auricular|Lateral vesical|Pararectal|Paratracheal|Node of).*?(nodes?|node)$", "description": "A regional lymph node or group of nodes that filters lymph from its drainage territory and participates in adaptive immune responses.", "source": "lymphatic" },
+    { "pattern": "\\bvein\\b", "description": "A named vein that carries blood from its drainage territory toward the heart; venous patterns can vary between individuals.", "source": "veins" },
+    { "pattern": "\\b(leaflet|semilunar leaflet)\\b", "description": "A leaflet of the named cardiac valve; valve leaflets open with forward pressure and close to prevent reverse blood flow.", "source": "cardiovascular" },
+    { "pattern": "^(Left|Right) (surface of heart|inferior border of heart|apex of heart|inferior interventricular sulcus|root of pulmonary trunk|atrioventricular valve)$", "description": "A named external landmark or valvular structure of the heart used to identify cardiac chambers, vessels, or blood-flow boundaries.", "source": "cardiovascular" },
+    { "pattern": "(gyrus|sulcus|fissure|occipital lobe|globus pallidus|lentiform nucleus|mamillary body|Base of peduncle|Aqueduct of midbrain|Central canal|funiculus|fasciculus)", "description": "A named neuroanatomical landmark or neural pathway in the brain or spinal cord; its identity localizes the structure within the central nervous system.", "source": "centralNervousSystem" },
+    { "pattern": "(lobule|vermis|Declive|Uvula of vermis|Pyramis of vermis|Folium of vermis|Peduncle of flocculus)$", "description": "A named subdivision or surface landmark of the cerebellum, the brain region that integrates sensory feedback with motor activity.", "source": "centralNervousSystem" },
+    { "pattern": "^(Medial|Superior|Inferior|Posterior|Anterior) .* nerve$|^Pudendal nerve$|^Nerve to ", "description": "A named peripheral nerve that carries neural fibers between the nervous system and its indicated anatomical territory.", "source": "centralNervousSystem" },
+    { "pattern": "(region|surfaces of digits|Dorsum of |Sole$|border of |groove|foveola|fold$|arch of foot|eminence|fossa|Apex of auricle|Auricular tubercle)", "description": "A named surface anatomical area or landmark used to describe the location of structures on the body.", "source": "regions" },
+    { "pattern": "^Nail plate", "description": "The visible hard keratin plate of the nail, produced by the nail matrix and lying over the nail bed.", "source": "skin" },
+    { "pattern": "^Perionyx", "description": "The soft tissue bordering the nail plate, forming part of the protective nail unit.", "source": "skin" },
+    { "pattern": "^Hairs of eyebrow", "description": "Keratinized hair shafts arising from follicles in the eyebrow skin.", "source": "skin" }
+    ,{ "pattern": "\\bnodes?\\b", "description": "A regional lymph node or group of nodes that filters lymph from its drainage territory and participates in adaptive immune responses.", "source": "lymphatic" }
+    ,{ "pattern": "^Internal abdominal oblique muscle", "description": "A lateral abdominal-wall muscle whose fibers help compress abdominal contents and assist trunk movement.", "source": "abdominalMuscles" }
+    ,{ "pattern": "(intermuscular septum|Iliopectineal arch)", "description": "A named connective-tissue partition or arch that separates or transmits structures in the indicated limb region.", "source": "skeletal" }
+    ,{ "pattern": "(Joints of|Radiocarpal joint|Crico-arytenoid joint|syndesmoses)", "description": "A named articulation or articulation group; its connective tissues join the indicated skeletal elements and determine permitted movement.", "source": "synovial" }
+    ,{ "pattern": "(Scapulohumeral|posterior compartment of forearm|lateral intertransversarii)", "description": "A named muscle group or muscle subdivision in the indicated region, represented to show its anatomical location.", "source": "muscles" }
+    ,{ "pattern": "(Frenula capsulae)", "description": "A synovial fold within the hip-joint capsule that carries vessels toward the femoral head.", "source": "synovial" }
+    ,{ "pattern": "(Branches of .* lumbar plexus|Roots of nerves|Ganglia)", "description": "A named component of the peripheral nervous system that carries or contains neural fibers outside the brain and spinal cord.", "source": "centralNervousSystem" }
+    ,{ "pattern": "(Central structures of spinal cord|Intermediate zone of spinal cord|Intermediomedial nucleus|Spinal reticular process)", "description": "A named spinal-cord region or nucleus used to localize gray or white matter within the central nervous system.", "source": "centralNervousSystem" }
+    ,{ "pattern": "^Tonsil of cerebellum", "description": "A rounded inferior lobule on the cerebellar hemisphere, part of the cerebellum’s surface anatomy.", "source": "centralNervousSystem" }
+  ]
+}

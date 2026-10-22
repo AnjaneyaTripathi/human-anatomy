@@ -1,0 +1,59 @@
+Z-Anatomy browser-model source
+================================
+
+This directory contains GLB exports derived without geometry decimation from
+Z-Anatomy, commit 04d15340bad66394659c0e3b3ff9d9bb0924f6ca:
+https://github.com/Z-Anatomy/Models-of-human-anatomy
+
+Source archive:
+https://raw.githubusercontent.com/Z-Anatomy/Models-of-human-anatomy/master/Z-Anatomy.zip
+SHA-256: e029688545627bd0214b269e1063143abb580aad72b2c2445d6d8a9a0d9da736
+
+Z-Anatomy declares its code and content CC BY-SA 4.0:
+https://creativecommons.org/licenses/by-sa/4.0/
+It requests attribution to “Z-Anatomy - The libre 3D atlas of anatomy -
+CC-BY-SA 4.0”, created by Gauthier Kervyn (design, 3D, anatomy) and Marcin
+Zielinski (Python script). It identifies the BodyParts3D source as
+“BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan”,
+created by Kousaku Okubo.
+
+Attribution source: https://github.com/Z-Anatomy/Models-of-human-anatomy
+
+Additional source notices retained from Z-Anatomy Readme.md/License.txt:
+- Brainder and White matter: University of Washington.
+- Cranial Nerves and Foramina: University of Dundee, CAHID, CC BY 4.0.
+- Anatomy of the Inner Ear: University of Dundee School of Medicine,
+  CC BY-NC-SA 4.0.
+- Kidney: Lissie Cowley, CC BY-NC 4.0.
+
+Those component-specific terms apply where relevant.  Do not treat this
+directory as uniformly commercial-use-safe. Definitions in anatomy.json are
+brief excerpts from embedded Z-Anatomy text records which the source says rely
+heavily on Wikipedia (CC BY-SA 3.0); their original URLs are retained in the
+source blend where provided.
+
+Export procedure: scripts/export_z_anatomy.py using Blender 4.3.2 in
+--disable-autoexec mode. CURVE/SURFACE objects are evaluated and converted to
+full-detail meshes because GLB cannot represent Blender curves. FONT labels,
+lights, and cameras are deliberately excluded as non-anatomical scene UI.
+
+Browser adaptations and exclusions:
+- scripts/adapt_materials.py preserves source material assignments while
+  adapting GLB material properties for browser rendering; it does not alter
+  mesh topology or decimate geometry. Material provenance is recorded in
+  public/data/material-provenance.json.
+- The cardiovascular payload is split losslessly into -01.glb and -02.glb by
+  scripts/split_glb.py for the static-host asset-size limit. The original GLB
+  is retained under .source/.
+- Ciliary body-curve.l and Ciliary body-curve.r are excluded construction
+  curves: each has bevel depth 0 and no bevel object, so neither renders as
+  anatomical tissue. Their empty GLB-node anatomy extras are removed by
+  scripts/finalize_asset_metadata.py.
+- Vertex-only `.i` landmarks are metadata annotations, not renderable model
+  surfaces. finalize_asset_metadata.py derives their positions from source
+  HOOK endpoints and records provenance plus source-bounds validation.
+
+Final metadata command (after exporting, splitting, and material adaptation):
+/private/tmp/blender-app/Blender.app/Contents/MacOS/Blender --background
+--factory-startup --disable-autoexec .source/Startup.blend --python
+scripts/finalize_asset_metadata.py -- public/data/anatomy.json
