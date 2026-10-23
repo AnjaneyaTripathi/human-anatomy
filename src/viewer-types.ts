@@ -48,6 +48,15 @@ export interface ViewerProgress {
   loaded: number;
   total: number;
   label: string;
+  /** `ready` means the initially visible systems can be used. */
+  stage?: 'loading' | 'ready' | 'deferred' | 'error';
+}
+
+export interface ViewerLoadOptions {
+  /** URL of an already-fetched manifest, used to resolve its relative asset paths. */
+  manifestUrl?: string;
+  /** Systems to fetch before reporting the viewer ready. Others load on demand. */
+  initialVisibleSystems?: Set<string>;
 }
 
 export interface ViewerCallbacks {

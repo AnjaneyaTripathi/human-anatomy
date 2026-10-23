@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "check:assets": "node scripts/validate-assets.mjs",
     "test:browser": "node scripts/smoke-test.mjs",
+    "test:performance": "node scripts/performance-regression.mjs",
     "preview": "vite preview"
   },
   "repository": {
@@ -26,7 +27,8 @@
     "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "three-mesh-bvh": "^0.9.16"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

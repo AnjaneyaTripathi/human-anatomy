@@ -21,6 +21,8 @@ await run('npm', ['run', 'build']);
 if (!existsSync(dist)) throw new Error('production build did not create dist/');
 mkdirSync(screenshots, { recursive: true });
 const manifest = JSON.parse(readFileSync(resolve(root, 'public/data/anatomy.json'), 'utf8'));
+const includedSystems = manifest.systems.filter((system) => system.id !== 'regions');
+const includedStructures = manifest.structures.filter((structure) => structure.system !== 'regions');
 const liver = manifest.structures.find((structure) => /^liver(?:\.|$)/i.test(structure.name));
 if (!liver) throw new Error('manifest has no selectable Liver structure for smoke coverage');
 const acromialFacet = manifest.landmarks?.find((landmark) => /^acromial facet\.i$/i.test(landmark.name));
@@ -41,22 +43,56 @@ if (!address || typeof address === 'string') throw new Error('could not allocate
 const origin = `http://127.0.0.1:${address.port}${basePath}`;
 const stage = (name) => console.log(`[smoke] ${name}`);
 let browser;
+let page;
+const browserErrors = [];
 try {
+  stage('launching browser');
   browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
-  const browserErrors = [];
-  page.on('pageerror', (error) => browserErrors.push(error.message));
-  page.on('console', (message) => { if (message.type() === 'error') browserErrors.push(message.text()); });
-  await page.goto(origin, { waitUntil: 'networkidle', timeout: 120000 });
+  page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
+  const requestedModels = new Set();
+  const modelResponses = [];
+  const navigationStarted = Date.now();
+  page.on('pageerror', (error) => { browserErrors.push(error.message); console.error(`[smoke] page error: ${error.message}`); });
+  page.on('console', (message) => { if (message.type() === 'error') { browserErrors.push(message.text()); console.error(`[smoke] console error: ${message.text()}`); } });
+  page.on('requestfailed', (request) => console.error(`[smoke] request failed: ${request.url()} (${request.failure()?.errorText ?? 'unknown error'})`));
+  page.on('request', (request) => {
+    const url = request.url();
+    if (/\.glb(?:[?#]|$)/i.test(url)) requestedModels.add(url);
+  });
+  page.on('response', async (response) => {
+    if (!/\.glb(?:[?#]|$)/i.test(response.url())) return;
+    const sizes = await response.request().sizes().catch(() => null);
+    modelResponses.push({ url: response.url(), bytes: (sizes?.responseBodySize ?? 0) + (sizes?.responseHeadersSize ?? 0) });
+  });
+  stage('navigating to production build');
+  await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  stage('DOM content loaded');
   const canvas = page.getByLabel('Interactive three dimensional human anatomy model');
   await canvas.waitFor({ timeout: 120000 });
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.structureCount) === expected, manifest.structures.length, { timeout: 120000 });
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.landmarkCount) === expected, manifest.landmarks.length, { timeout: 120000 });
+  stage('viewer canvas mounted');
+  await page.locator('.viewer-status').waitFor({ state: 'detached', timeout: 120000 });
+  const skeletal = manifest.systems.find((system) => system.id === 'skeletal');
+  if (!skeletal) throw new Error('skeletal system missing from manifest');
+  const initiallyVisibleStructures = skeletal.count;
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, initiallyVisibleStructures, { timeout: 120000 });
+  stage(`initial mapped visibility ${initiallyVisibleStructures}`);
+  const deferredSystems = includedSystems.filter((system) => system.id !== 'skeletal');
+  const eagerlyRequestedDeferred = deferredSystems.flatMap((system) => (system.files?.length ? system.files : [system.file]).filter(Boolean))
+    .filter((file) => [...requestedModels].some((url) => url.includes(file.split('/').at(-1))));
+  if (eagerlyRequestedDeferred.length) throw new Error(`initial load requested deferred anatomy assets: ${eagerlyRequestedDeferred.join(', ')}`);
+  const skeletalFiles = skeletal.files?.length ? skeletal.files : [skeletal.file];
+  if (!skeletalFiles.some((file) => file && [...requestedModels].some((url) => url.includes(file.split('/').at(-1))))) throw new Error('initial ready state did not request the skeletal GLB');
+  const initialModelBytes = modelResponses.reduce((total, response) => total + response.bytes, 0);
+  console.log(`[smoke] initial-ready ${Date.now() - navigationStarted}ms; ${initialModelBytes} transfer bytes across ${modelResponses.length} GLB response(s)`);
   stage('atlas loaded');
   if (await page.locator('.viewer-status.error').count()) throw new Error(`viewer displayed an error: ${await page.locator('.viewer-status.error').innerText()}`);
   await page.screenshot({ path: resolve(screenshots, 'atlas-desktop-initial.png'), fullPage: true });
 
   const search = page.getByLabel('Search structures');
+  if (await page.getByRole('button', { name: /regions of the human body/i }).count()) throw new Error('excluded Regions system is still exposed in the anatomy library');
+  if (await page.getByLabel(/hide regions|show regions/i).count()) throw new Error('excluded Regions system still has a visibility control');
+  await search.fill('Frontal region');
+  if (await page.locator('.structure-row').count()) throw new Error('excluded Frontal region structures remain searchable');
   await search.fill('Liver');
   await page.locator('.structure-row').filter({ has: page.locator('b', { hasText: /^Liver$/i }) }).first().click();
   await page.getByRole('heading', { name: /liver/i }).waitFor();
@@ -66,16 +102,22 @@ try {
   await page.waitForTimeout(700);
   stage('liver isolated');
   await page.screenshot({ path: resolve(screenshots, 'atlas-liver-isolated.png'), fullPage: true });
-  const skeletal = manifest.systems.find((system) => system.id === 'skeletal');
-  if (!skeletal) throw new Error('skeletal system missing from manifest');
   await page.getByRole('button', { name: 'Skeleton' }).click();
   await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, skeletal.count);
   await page.locator('.preset-bar').getByRole('button', { name: 'All structures' }).click();
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, manifest.structures.length);
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, includedStructures.length);
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.structureCount) === expected, includedStructures.length, { timeout: 120000 });
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.landmarkCount) === expected, manifest.landmarks.length, { timeout: 120000 });
+  const regionFile = manifest.systems.find((system) => system.id === 'regions')?.file;
+  if (regionFile && [...requestedModels].some((url) => url.includes(regionFile.split('/').at(-1)))) throw new Error('All structures requested the excluded regions GLB');
+  stage(`all ${includedStructures.length} included structures explicitly loaded and mapped`);
+  await page.getByRole('button', { name: 'Show all' }).click();
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, includedStructures.length);
+  if (regionFile && [...requestedModels].some((url) => url.includes(regionFile.split('/').at(-1)))) throw new Error('Show all requested the excluded regions GLB');
   await page.getByRole('button', { name: 'Hide', exact: true }).click();
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected - 1, manifest.structures.length);
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected - 1, includedStructures.length);
   await page.locator('.structure-row').filter({ has: page.locator('b', { hasText: /^Liver$/i }) }).first().click();
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, manifest.structures.length);
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, includedStructures.length);
   await page.getByRole('button', { name: /hide skeletal system/i }).click();
   await page.getByRole('button', { name: /show skeletal system/i }).waitFor();
   await page.getByRole('button', { name: /show skeletal system/i }).click();
@@ -109,12 +151,14 @@ try {
   await page.keyboard.press('Escape');
   await page.getByRole('dialog', { name: /source & coverage/i }).waitFor({ state: 'detached' });
   stage('source modal passed');
+  await page.getByRole('button', { name: 'Reset view' }).click();
+  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.visibleStructureCount) === expected, skeletal.count);
+  stage('reset restored skeletal-only initial view');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle', timeout: 120000 });
   await page.getByLabel('Interactive three dimensional human anatomy model').waitFor({ timeout: 120000 });
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.structureCount) === expected, manifest.structures.length, { timeout: 120000 });
-  await page.waitForFunction((expected) => Number(document.querySelector('canvas')?.dataset.landmarkCount) === expected, manifest.landmarks.length, { timeout: 120000 });
+  await page.locator('.viewer-status').waitFor({ state: 'detached', timeout: 120000 });
   await page.getByLabel('Open structure library').click();
   await page.getByLabel('Search structures').fill('Liver');
   await page.locator('.structure-row').filter({ has: page.locator('b', { hasText: /^Liver$/i }) }).first().click();
@@ -137,7 +181,19 @@ try {
   stage('mobile library and inspector passed');
   if (browserErrors.length) throw new Error(`browser console/page errors:\n${[...new Set(browserErrors)].join('\n')}`);
   console.log(`Browser smoke passed at ${origin}; screenshots written to test-results/.`);
+} catch (error) {
+  if (page) {
+    const diagnostics = await page.evaluate(() => ({
+      status: document.querySelector('.viewer-status')?.textContent?.trim() ?? null,
+      canvas: document.querySelector('canvas') ? Object.fromEntries(Object.entries(document.querySelector('canvas').dataset)) : null,
+      body: document.body.innerText.slice(0, 2_000),
+    })).catch(() => null);
+    console.error(`[smoke] failure diagnostics: ${JSON.stringify(diagnostics)}`);
+    await page.screenshot({ path: resolve(screenshots, 'smoke-failure.png'), fullPage: true }).catch(() => undefined);
+  }
+  throw error;
 } finally {
   await browser?.close();
+  server.closeAllConnections?.();
   await new Promise((resolveClose) => server.close(resolveClose));
 }

@@ -14,6 +14,33 @@ const views: Array<{ id: ViewDirection; label: string }> = [
   { id: 'left', label: 'Left' }, { id: 'right', label: 'Right' },
 ]
 type CatalogEntry = (AnatomyStructure | AnatomyLandmark) & { kind: 'structure' | 'landmark' }
+const EXCLUDED_SYSTEM_IDS = new Set(['regions'])
+
+/** Keeps the source manifest untouched while omitting the outer skin envelope at runtime. */
+function atlasWithoutOuterSkin(atlas: AnatomyManifest): AnatomyManifest {
+  const systems = atlas.systems.filter((system) => !EXCLUDED_SYSTEM_IDS.has(system.id))
+  const systemIds = new Set(systems.map((system) => system.id))
+  const structures = atlas.structures.filter((structure) => systemIds.has(structure.system))
+  const structureIds = new Set(structures.map((structure) => structure.id))
+  const landmarks = atlas.landmarks?.filter((landmark) => systemIds.has(landmark.system) && (!landmark.parentStructureId || structureIds.has(landmark.parentStructureId)))
+  return {
+    ...atlas,
+    systems,
+    structures,
+    landmarks,
+    coverage: {
+      ...atlas.coverage,
+      runtimeExcludedSystems: ['regions'],
+      runtimeExportedStructures: structures.length,
+    },
+  }
+}
+
+/** Show the compact skeleton immediately; the remaining systems load when requested. */
+function initialVisibleSystems(atlas?: AnatomyManifest): Set<string> {
+  const skeletal = atlas?.systems.find((system) => system.id === 'skeletal')
+  return new Set(skeletal ? [skeletal.id] : atlas?.systems.slice(0, 1).map((system) => system.id) ?? [])
+}
 
 function titleCase(value: string) { return value.replace(/[-_]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) }
 function displayName(value: string) {
@@ -32,6 +59,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState('Preparing anatomy library')
   const [ready, setReady] = useState(false)
+  const [assetBusy, setAssetBusy] = useState(false)
+  const [assetFailure, setAssetFailure] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [visible, setVisible] = useState<Set<string>>(new Set())
@@ -50,31 +79,31 @@ export default function App() {
     abortRef.current?.abort()
     viewer.current?.dispose(); viewer.current = null
     const aborter = new AbortController(); abortRef.current = aborter
-    setSelectedId(null); setError(null); setReady(false); setProgress('Reading atlas index')
+    setSelectedId(null); setError(null); setAssetFailure(null); setReady(false); setAssetBusy(true); setProgress('Reading atlas index')
     try {
       const manifestUrl = `${import.meta.env.BASE_URL}data/anatomy.json`
       const response = await fetch(manifestUrl, { signal: aborter.signal })
       if (epoch !== loadEpoch.current) return
       if (!response.ok) throw new Error(`The anatomy index could not be loaded (${response.status}).`)
-      const data = await response.json() as AnatomyManifest
+      const rawData = await response.json() as AnatomyManifest
       if (epoch !== loadEpoch.current) return
-      if (!Array.isArray(data.systems) || !Array.isArray(data.structures)) throw new Error('The anatomy index has an invalid format.')
+      if (!Array.isArray(rawData.systems) || !Array.isArray(rawData.structures)) throw new Error('The anatomy index has an invalid format.')
+      const data = atlasWithoutOuterSkin(rawData)
       setAtlas(data)
-      const initial = new Set(data.systems.map((system) => system.id).filter((id) => !/regions|skin|integument|muscular|muscle/i.test(id)))
+      const initial = initialVisibleSystems(data)
       setVisible(initial); setOpacities(Object.fromEntries(data.systems.map((system) => [system.id, 1])))
       if (!mount.current) return
       const instance = new AnatomyViewer(mount.current, {
         onSelect: (id) => { if (epoch === loadEpoch.current) setSelectedId(id) },
         onHover: (id) => { if (epoch === loadEpoch.current) setHoveredId(id) },
-        onProgress: (p) => { if (epoch === loadEpoch.current) setProgress(`Loading ${p.label}`) },
-        onReady: () => { if (epoch === loadEpoch.current) { setReady(true); setProgress('Atlas ready') } },
+        onProgress: (p) => { if (epoch === loadEpoch.current) { setProgress(p.stage === 'error' ? p.label : `Loading ${p.label}`); if (p.stage === 'error') { setAssetFailure(p.label); setAssetBusy(false) } else if (p.stage === 'loading' || p.stage === 'deferred') setAssetBusy(true); else if (p.stage === 'ready') { setAssetFailure(null); setAssetBusy(false) } } },
+        onReady: () => { if (epoch === loadEpoch.current) setReady(true) },
         onError: (message) => { if (epoch === loadEpoch.current) setError(message) },
         onRevealSystem: (system) => { if (epoch === loadEpoch.current) setVisible((current) => new Set(current).add(system)) },
       })
       viewer.current = instance
-      await instance.load(manifestUrl)
+      await instance.load(data, { manifestUrl, initialVisibleSystems: initial })
       if (epoch !== loadEpoch.current) { instance.dispose(); return }
-      instance.setVisibleSystems(initial)
     } catch (reason) {
       if (epoch !== loadEpoch.current || aborter.signal.aborted) return
       setError(reason instanceof Error ? reason.message : 'The atlas could not be loaded.')
@@ -145,7 +174,7 @@ export default function App() {
   const applyView = (id: ViewDirection) => { setView(id); viewer.current?.setView(id) }
   const applyClip = (axis: ClipAxis) => { setClipAxis(axis); viewer.current?.setClipping(axis, clipFraction / 100) }
   const resetAtlasView = () => {
-    const initial = new Set(atlas?.systems.map((system) => system.id).filter((id) => !/regions|muscular|muscle/i.test(id)) ?? [])
+    const initial = initialVisibleSystems(atlas ?? undefined)
     viewer.current?.showAll(); updateVisible(initial); viewer.current?.select(null); viewer.current?.setView('anterior'); viewer.current?.setClipping('none')
     setSelectedId(null); setView('anterior'); setClipAxis('none'); setOpacities(Object.fromEntries((atlas?.systems ?? []).map((system) => [system.id, 1])))
     atlas?.systems.forEach((system) => viewer.current?.setSystemOpacity(system.id, 1))
@@ -171,14 +200,15 @@ export default function App() {
     <section className="stage" aria-label="3D anatomy viewer">
       <div className="stage-top"><div><span className="eyebrow">INTERACTIVE MODEL</span><h1>Explore the human body.</h1></div><div className="view-buttons" aria-label="Camera direction">{views.map((item) => <button key={item.id} className={view === item.id ? 'active' : ''} onClick={() => applyView(item.id)}>{item.label}</button>)}</div></div>
       <div ref={mount} className="viewer-mount" />
-      {!ready && !error && <div className="viewer-status"><span className="spinner" />{progress}</div>}
+      {(!ready || assetBusy) && !error && !assetFailure && <div className="viewer-status"><span className="spinner" />{progress}</div>}
+      {ready && assetFailure && !error && <div className="viewer-status error"><span>{assetFailure}</span></div>}
       {error && <div className="viewer-status error"><span>{error}</span><button onClick={() => void load()}>Retry</button></div>}
       <div className="stage-note"><Move3d size={14}/> Drag to rotate · scroll to zoom · select a structure to inspect</div>
       <div className="preset-bar" aria-label="Viewing presets"><span>View</span><button onClick={() => setPreset('viscera')}>Viscera</button><button onClick={() => setPreset('muscles')}>Muscles</button><button onClick={() => setPreset('skeleton')}>Skeleton</button><button onClick={() => setPreset('all')}>All structures</button></div>
       <div className="clip-control"><ScanLine size={15}/><select value={clipAxis} onChange={(event) => applyClip(event.target.value as ClipAxis)} aria-label="Section plane"><option value="none">No section</option><option value="x">Sagittal section</option><option value="y">Transverse section</option><option value="z">Coronal section</option></select>{clipAxis !== 'none' && <input type="range" min="0" max="100" value={clipFraction} aria-label="Section position" onChange={(event) => { const fraction = Number(event.target.value); setClipFraction(fraction); viewer.current?.setClipping(clipAxis, fraction / 100) }} />}</div>
     </section>
 
-    <aside className={`inspector ${selected ? 'has-selection' : ''}`} aria-label="Structure inspector">{selected ? <><div className="inspector-head"><span className="eyebrow">{selected.kind === 'landmark' ? 'SURFACE LANDMARK' : 'SELECTED STRUCTURE'}</span><button onClick={() => { setSelectedId(null); viewer.current?.select(null) }} aria-label="Clear selection"><X size={17}/></button></div><div className="anatomy-mark" style={{ borderColor: systemsById.get(selected.system)?.color }} /><h2>{displayName(selected.name)}</h2><p className="taxonomy">{selected.kind === 'landmark' ? 'Surface landmark' : systemsById.get(selected.system)?.label ?? titleCase(selected.system)}</p>{landmarkParent && <p className="parent-context">Parent bone: {displayName(landmarkParent.name)}</p>}{selected.descriptionOrigin === 'parent_name' && selected.descriptionAppliesTo && <p className="parent-context">Parent context: {displayName(selected.descriptionAppliesTo)}</p>}<p className="description">{selected.description || 'Description unavailable.'}</p><p className="review-status"><CircleHelp size={14}/> {selected.descriptionStatus === 'source_definition_excerpt' ? 'Source excerpt · unreviewed' : selected.descriptionStatus === 'editorial_unreviewed' ? 'Editorial description · unreviewed' : 'Description unavailable'}</p>{selected.descriptionSourceUrls?.filter((url) => /^https?:\/\//.test(url)).map((url) => <a key={url} className="description-source" href={url} target="_blank" rel="noreferrer">Description source <ChevronRight size={13}/></a>)}<div className="inspector-actions"><button onClick={() => viewer.current?.focus(selected.id)}><Focus size={15}/> Focus</button><button onClick={() => viewer.current?.isolate(selected.id)}><Box size={15}/> Isolate</button><button onClick={() => viewer.current?.hide(selected.id)}><EyeOff size={15}/> Hide</button></div></> : <div className="empty-inspector"><Layers3 size={25}/><span className="eyebrow">INSPECTOR</span><h2>Select a structure</h2><p>Choose any anatomical structure in the model or library to read its source description.</p></div>}<div className="inspector-bottom"><button onClick={() => { viewer.current?.showAll(); atlas && updateVisible(new Set(atlas.systems.map((s) => s.id))) }}><Eye size={15}/> Show all</button><button onClick={() => { const initial = new Set(atlas?.systems.map((s) => s.id).filter((id) => !/regions|muscular|muscle/i.test(id)) ?? []); viewer.current?.showAll(); updateVisible(initial); viewer.current?.select(null); viewer.current?.setView('anterior'); viewer.current?.setClipping('none'); setSelectedId(null); setView('anterior'); setClipAxis('none'); setOpacities(Object.fromEntries((atlas?.systems ?? []).map((s) => [s.id, 1]))); atlas?.systems.forEach((s) => viewer.current?.setSystemOpacity(s.id, 1)) }}><RotateCcw size={15}/> Reset view</button></div></aside>
+    <aside className={`inspector ${selected ? 'has-selection' : ''}`} aria-label="Structure inspector">{selected ? <><div className="inspector-head"><span className="eyebrow">{selected.kind === 'landmark' ? 'SURFACE LANDMARK' : 'SELECTED STRUCTURE'}</span><button onClick={() => { setSelectedId(null); viewer.current?.select(null) }} aria-label="Clear selection"><X size={17}/></button></div><div className="anatomy-mark" style={{ borderColor: systemsById.get(selected.system)?.color }} /><h2>{displayName(selected.name)}</h2><p className="taxonomy">{selected.kind === 'landmark' ? 'Surface landmark' : systemsById.get(selected.system)?.label ?? titleCase(selected.system)}</p>{landmarkParent && <p className="parent-context">Parent bone: {displayName(landmarkParent.name)}</p>}{selected.descriptionOrigin === 'parent_name' && selected.descriptionAppliesTo && <p className="parent-context">Parent context: {displayName(selected.descriptionAppliesTo)}</p>}<p className="description">{selected.description || 'Description unavailable.'}</p><p className="review-status"><CircleHelp size={14}/> {selected.descriptionStatus === 'source_definition_excerpt' ? 'Source excerpt · unreviewed' : selected.descriptionStatus === 'editorial_unreviewed' ? 'Editorial description · unreviewed' : 'Description unavailable'}</p>{selected.descriptionSourceUrls?.filter((url) => /^https?:\/\//.test(url)).map((url) => <a key={url} className="description-source" href={url} target="_blank" rel="noreferrer">Description source <ChevronRight size={13}/></a>)}<div className="inspector-actions"><button onClick={() => viewer.current?.focus(selected.id)}><Focus size={15}/> Focus</button><button onClick={() => viewer.current?.isolate(selected.id)}><Box size={15}/> Isolate</button><button onClick={() => viewer.current?.hide(selected.id)}><EyeOff size={15}/> Hide</button></div></> : <div className="empty-inspector"><Layers3 size={25}/><span className="eyebrow">INSPECTOR</span><h2>Select a structure</h2><p>Choose any anatomical structure in the model or library to read its source description.</p></div>}<div className="inspector-bottom"><button onClick={() => { viewer.current?.showAll(); atlas && updateVisible(new Set(atlas.systems.map((s) => s.id))) }}><Eye size={15}/> Show all</button><button onClick={() => { const initial = initialVisibleSystems(atlas ?? undefined); viewer.current?.showAll(); updateVisible(initial); viewer.current?.select(null); viewer.current?.setView('anterior'); viewer.current?.setClipping('none'); setSelectedId(null); setView('anterior'); setClipAxis('none'); setOpacities(Object.fromEntries((atlas?.systems ?? []).map((s) => [s.id, 1]))); atlas?.systems.forEach((s) => viewer.current?.setSystemOpacity(s.id, 1)) }}><RotateCcw size={15}/> Reset view</button></div></aside>
     <footer className="footer"><span>Original geometry: Z-Anatomy</span><button onClick={() => setInfoOpen(true)}>Source & coverage <ChevronRight size={13}/></button></footer>
     {infoOpen && <div className="modal-backdrop" role="presentation" onMouseDown={() => setInfoOpen(false)}><section className="info-modal" role="dialog" aria-modal="true" aria-labelledby="source-title" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" onClick={() => setInfoOpen(false)} aria-label="Close source and coverage"><X size={18}/></button><span className="eyebrow">EDITORIAL NOTE / 01</span><h2 id="source-title">Source & coverage</h2><p>This atlas uses original open anatomy geometry, currently an original male model. A corresponding female model is absent; coverage is incomplete.</p><dl><dt>Geometry source</dt><dd>{atlas?.source?.url ? <a href={atlas.source.url} target="_blank" rel="noreferrer">{atlas.source.name}</a> : atlas?.source?.name || 'Z-Anatomy'}</dd><dt>License</dt><dd>{atlas?.source?.license || 'See source documentation. Individual subassets may carry distinct restrictions.'}</dd><dt>Descriptions</dt><dd>Source and Wikipedia-derived entries; they have not been independently verified against Netter.</dd></dl><p>Netter plate-by-plate audit is pending. No Netter plates are copied here. Use the <a href="https://www.us.elsevierhealth.com/media/wysiwyg/PDF/NetterAtlas9e_3DcorrelatesCompleteAnatomy.pdf" target="_blank" rel="noreferrer">official Netter 9e 3D-correlates checklist</a> as a public reference for future review.</p><button className="modal-done" onClick={() => setInfoOpen(false)}>Return to atlas</button></section></div>}
   </main>
